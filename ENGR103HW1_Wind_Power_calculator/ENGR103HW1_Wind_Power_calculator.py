@@ -1,17 +1,11 @@
-from math import pi
+﻿from math import pi
 from math import floor
+from math import ceil
 from math import log10
 
 AIR_DENSITY : float = 1.2 # Kilograms per cubic meter
-NUMERIC_CHARS = ['0','1','2','3','4','5','6','7','8','9']
-                           
-bladeLength : float # Meters
-avgWindSpeed : float # Meters per second
-operatingEfficiency : float # Percentage 0-100
-
-windmillEnergyProduction : float # Watts
-
-userInput : str
+NUMERIC_CHARS : list[str] = ['0','1','2','3','4','5','6','7','8','9']
+MAGNITUDE_UNITS : list[str] = ['p','n','𝜇','m','','k','M','G','T']
 
 def listHasStringValue(array:list[str],value:str) -> bool:
 
@@ -80,15 +74,31 @@ def getWindmillActualEnergyProduction(windspeed:float,bladelen:float,efficiency:
 
     return getWindmillMaximumEnergyProduction(windspeed,bladelen) * (efficiency / 100)
 
-def getOrderOfMagnitude(x:float)->int:
+def getOrderOfMagnitude(x:float) -> int:
     return floor(log10(x))
 
-def formatWattage(value:float) -> dict: # return dict {power:float,unit:char}
+def getHighestPlace(x:float) -> int:
+    return getOrderOfMagnitude(x)+1
 
-    return {'power':value,'unit':''}
+def round_up(num, divisor):
+    return ceil(num / divisor) * divisor
+
+# Take power in watts, reformat for best magnitude units
+def formatWattage(watts:float) -> dict:
+    idx : int = floor((round_up(getHighestPlace(watts),3)/3)-1)
+    if idx < -4: idx = -4
+    elif idx > 4: idx = 4
+    value : float = watts * (1000**(-idx))
+    idx += 4
+    return {'value':value,'unit':MAGNITUDE_UNITS[idx]}
 
 # using main function just for cohesion
 def main():
+
+    bladeLength : float # Meters
+    avgWindSpeed : float # Meters per second
+    operatingEfficiency : float # Percentage 0-100
+    userInput : str
 
     print("-- welcome to the Windmill Power Output calculator --\n")
 
@@ -137,8 +147,10 @@ def main():
                 print("Invalid input (Only numbers, no fractions)\n")
 
         # get result and output
-        windmillEnergyProduction = getWindmillActualEnergyProduction(avgWindSpeed,bladeLength,operatingEfficiency)
-        print("\nWindmill Power Output: {power}{unit}W\n".format(power = windmillEnergyProduction, unit = ''))
+        windmillEnergyProduction : float = getWindmillActualEnergyProduction(avgWindSpeed,bladeLength,operatingEfficiency)
+
+        # format and print output message
+        print("\nWindmill Power Output: {value} {unit}W\n".format_map(formatWattage(windmillEnergyProduction)))
 
         # handle repeat / termination
         userInput = input("\n\n -- enter to continue, input e to exit --\n\n")
