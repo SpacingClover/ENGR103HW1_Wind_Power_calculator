@@ -69,12 +69,17 @@ def getWindmillMaximumEnergyProduction(windspeed:float,bladelen:float) -> float:
 def getWindmillActualEnergyProduction(windspeed:float,bladelen:float,efficiency:float) -> float:
 
     if efficiency < 0 or efficiency > 100:
-        print("ERROR: at line 50 in getWindmillActualEnergyProduction, parameter 'efficiency' out of range\n")
+        print("ERROR: in getWindmillActualEnergyProduction, parameter 'efficiency' out of range\n")
         return -1
 
     return getWindmillMaximumEnergyProduction(windspeed,bladelen) * (efficiency / 100)
 
 def getOrderOfMagnitude(x:float) -> int:
+
+    if x == 0:
+        print("ERROR: in getOrderOfMagnitude, parameter 'x' cannot be 0")
+        return 0
+
     return floor(log10(x))
 
 def getHighestPlace(x:float) -> int:
@@ -84,6 +89,7 @@ def round_up(num, divisor):
     return ceil(num / divisor) * divisor
 
 # Take power in watts, reformat for best magnitude units
+# Returns format mapping compatible with output string template
 def formatWattage(watts:float) -> dict:
     idx : int = floor((round_up(getHighestPlace(watts),3)/3)-1)
     if idx < -4: idx = -4
@@ -104,31 +110,41 @@ def main():
 
     while True:
 
-        # handle blade length
+        # get input blade length
         print("\nWindmill blade length? (In meters, only numbers, no fractions)")
         while True:
             userInput = input()
 
             if isStringValidFloat(userInput):
                 bladeLength = float(userInput)
-                break
+
+                if bladeLength <= 0:
+                    print("Value out of range (0 < x ≤ 100)\n")
+
+                else:
+                    break
 
             else:
                 print("Invalid input (Only numbers, no fractions)\n")
 
-        # handle average wind speed
+        # get input average wind speed
         print("\nWhat is the average wind speed where this windmill is located? (In meters per second, only numbers, no fractions)")
         while True:
             userInput = input()
 
             if isStringValidFloat(userInput):
                 avgWindSpeed = float(userInput)
-                break
+
+                if avgWindSpeed <= 0:
+                    print("Value out of range (0 < x ≤ 100)\n")
+
+                else:
+                    break
 
             else:
                 print("Invalid input (Only numbers, no fractions)\n")
 
-        # handle operating efficiency
+        # get input operating efficiency
         print("\nWhat is the windmill's operating efficiency percentage? (As a percentage, between 0% and 100%)")
         while True:
             userInput = input()
@@ -137,8 +153,8 @@ def main():
                 userInput = userInput.replace('%','')
                 operatingEfficiency = float(userInput)
 
-                if operatingEfficiency > 100 or operatingEfficiency < 0:
-                    print("Value out of range (0-100)\n")
+                if operatingEfficiency > 100 or operatingEfficiency <= 0:
+                    print("Value out of range (0 < x ≤ 100)\n")
 
                 else:
                     break
@@ -146,7 +162,7 @@ def main():
             else:
                 print("Invalid input (Only numbers, no fractions)\n")
 
-        # get result and output
+        # get result
         windmillEnergyProduction : float = getWindmillActualEnergyProduction(avgWindSpeed,bladeLength,operatingEfficiency)
 
         # format and print output message
