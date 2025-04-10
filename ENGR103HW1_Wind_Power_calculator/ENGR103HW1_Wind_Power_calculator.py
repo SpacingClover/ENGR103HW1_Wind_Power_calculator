@@ -33,7 +33,7 @@ def isStringValidFloat(string:str) -> bool:
             if char == '-':
 
                 if i == 0:
-                    pass # leading '-' allowed
+                    pass # leading '-' allowed, so that user can recieve more applicable 'out of bounds' message later on
 
                 else:
                     return False # '-' in body not allowed
@@ -44,7 +44,7 @@ def isStringValidFloat(string:str) -> bool:
                     return False # more than one period not allowed
 
                 else:
-                    hasPeriod = True # one period allowed
+                    hasPeriod = True # one period allowed, decimal place
 
             else:
                 return False # no other chars accepted
@@ -82,95 +82,103 @@ def getOrderOfMagnitude(x:float) -> int:
 
     return floor(log10(x))
 
+
 def getHighestPlace(x:float) -> int:
+
     return getOrderOfMagnitude(x)+1
 
-def round_up(num, divisor):
-    return ceil(num / divisor) * divisor
+def roundUpToStep(num, step):
+
+    # round 'num' up to nearest multiple of 'step'
+    return ceil(num / step) * step
 
 # Take power in watts, reformat for best magnitude units
 # Returns format mapping compatible with output string template
 def formatWattage(watts:float) -> dict:
-    idx : int = floor((round_up(getHighestPlace(watts),3)/3)-1)
+
+    #convert wattage to three-place magnitude index from zero
+    idx : int = floor((roundUpToStep(getHighestPlace(watts),3)/3)-1)
+
+    # clamp unit character index to remain in range of MAGNITUDE_UNITS
     if idx < -4: idx = -4
     elif idx > 4: idx = 4
+
+    # change magnitude to respect new units
     value : float = watts * (1000**(-idx))
+
+    # shift forward so that negative magnitudes are not negative indices
     idx += 4
+
     return {'value':value,'unit':MAGNITUDE_UNITS[idx]}
 
-# using main function just for cohesion
+def getFloatInput(inputMessage:str,acceptPercentage:bool=False) -> float:
+
+    userInput : str
+    result : float
+
+    print(inputMessage)
+
+    while True:
+        userInput = input()
+
+        if acceptPercentage:
+
+            if isStringValidPercentage(userInput):
+                userInput = userInput.replace('%','')
+                result = float(userInput)
+
+                if result > 100 or result <= 0:
+                    print("Value out of range (0 < x ≤ 100)\n")
+
+                else:
+                    break
+
+        else: # normal floats
+
+            if isStringValidFloat(userInput):
+                result = float(userInput)
+
+                if result <= 0:
+                    print("Value out of range (0 < x)\n")
+
+                else:
+                    break
+
+            else:
+                print("Invalid input (Only numbers, no fractions)\n")
+
+    return result
+
 def main():
 
     bladeLength : float # Meters
     avgWindSpeed : float # Meters per second
     operatingEfficiency : float # Percentage 0-100
     userInput : str
+    windmillEnergyProduction : float # Watts
 
     print("-- welcome to the Windmill Power Output calculator --\n")
 
     while True:
+        
+        # get blade length
+        bladeLength = getFloatInput("\nWindmill blade length? (In meters, only numbers, no fractions)")
 
-        # get input blade length
-        print("\nWindmill blade length? (In meters, only numbers, no fractions)")
-        while True:
-            userInput = input()
+        # get average wind speed
+        avgWindSpeed = getFloatInput("\nWhat is the average wind speed where this windmill is located? (In meters per second, only numbers, no fractions)")
 
-            if isStringValidFloat(userInput):
-                bladeLength = float(userInput)
+        # get operating efficiency
+        operatingEfficiency = getFloatInput("\nWhat is the windmill's operating efficiency percentage? (As a percentage, between 0% and 100%)",True)
 
-                if bladeLength <= 0:
-                    print("Value out of range (0 < x ≤ 100)\n")
-
-                else:
-                    break
-
-            else:
-                print("Invalid input (Only numbers, no fractions)\n")
-
-        # get input average wind speed
-        print("\nWhat is the average wind speed where this windmill is located? (In meters per second, only numbers, no fractions)")
-        while True:
-            userInput = input()
-
-            if isStringValidFloat(userInput):
-                avgWindSpeed = float(userInput)
-
-                if avgWindSpeed <= 0:
-                    print("Value out of range (0 < x ≤ 100)\n")
-
-                else:
-                    break
-
-            else:
-                print("Invalid input (Only numbers, no fractions)\n")
-
-        # get input operating efficiency
-        print("\nWhat is the windmill's operating efficiency percentage? (As a percentage, between 0% and 100%)")
-        while True:
-            userInput = input()
-
-            if isStringValidPercentage(userInput):
-                userInput = userInput.replace('%','')
-                operatingEfficiency = float(userInput)
-
-                if operatingEfficiency > 100 or operatingEfficiency <= 0:
-                    print("Value out of range (0 < x ≤ 100)\n")
-
-                else:
-                    break
-
-            else:
-                print("Invalid input (Only numbers, no fractions)\n")
-
-        # get result
-        windmillEnergyProduction : float = getWindmillActualEnergyProduction(avgWindSpeed,bladeLength,operatingEfficiency)
+        # calculate result
+        windmillEnergyProduction = getWindmillActualEnergyProduction(avgWindSpeed,bladeLength,operatingEfficiency)
 
         # format and print output message
         print("\nWindmill Power Output: {value} {unit}W\n".format_map(formatWattage(windmillEnergyProduction)))
 
         # handle repeat / termination
         userInput = input("\n\n -- enter to continue, input e to exit --\n\n")
-        if userInput == "e":
+        if userInput[0] == "e": # only checking first char in case they wrote "exit", "egress", or "escaparse"
             break
 
 main()
