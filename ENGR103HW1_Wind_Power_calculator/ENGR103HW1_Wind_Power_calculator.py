@@ -49,6 +49,9 @@ def is_string_valid_float(string:str) -> bool:
     has_period : bool = False
     i : int = 0
 
+    if len(string) == 0:
+        return False
+
     char : str
     for char in string:
 
@@ -90,6 +93,9 @@ def is_string_valid_float(string:str) -> bool:
 #######################################################################
 
 def is_string_valid_percentage(string:str) -> bool:
+
+    if len(string) == 0:
+        return False
 
     if string[len(string)-1] == '%':
         string = string.replace('%','')
@@ -228,6 +234,9 @@ def get_float_input(inputMessage:str,acceptPercentage:bool=False) -> float:
                 else:
                     break
 
+            else:
+                print("Invalid input (Only numbers, no fractions)\n")
+                
         else: # normal floats
 
             if is_string_valid_float(user_input):
@@ -273,7 +282,7 @@ def main():
 
         # handle repeat / termination
         user_input = input("\n\n -- enter to continue, input e to exit --\n\n")
-        if user_input[0] == "e": # only checking first char in case they wrote "exit", "egress", or "escaparse"
+        if len(user_input) > 0 and user_input[0] == "e": # only checking first char in case they wrote "exit", "egress", or "escaparse"
             break
 
 main()
